@@ -1,0 +1,26 @@
+services:
+  agentpost:
+    build: .
+    restart: unless-stopped
+    # Every setting in .env reaches the container.
+    env_file: .env
+    environment:
+      AGENTPOST_PUBLIC_URL: ${AGENTPOST_PUBLIC_URL:?set AGENTPOST_PUBLIC_URL in .env}
+      # Inside the container these are fixed; the volume and port mapping rely on them.
+      AGENTPOST_DB: /data/agentpost.sqlite
+      AGENTPOST_HOST: 0.0.0.0
+      AGENTPOST_PORT: "8765"
+    # Localhost only. The tunnel (cloudflared on this host) is the only way in from outside.
+    ports:
+      - "127.0.0.1:${AGENTPOST_HOST_PORT:-8765}:8765"
+    volumes:
+      - agentpost-data:/data
+    # One log line per request adds up on a machine that never restarts.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  agentpost-data:
